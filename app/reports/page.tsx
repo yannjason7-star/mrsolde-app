@@ -1,1 +1,1 @@
-export default function Page() { return <div className='p-8'><h1 className='text-2xl font-black uppercase text-brand-red'>Page : reports</h1><p className='text-gray-500 mt-2'>Interface Mr. Solde en cours de développement...</p></div>; }
+export default function Page() { return <div className='p-8'><h1 className='text-2xl font-black uppercase text-brand-red'>Page : reports</h1><p className='text-gray-500 mt-2'>Interface Mr. Solde en cours de dï¿½veloppement...</p></div>; }
