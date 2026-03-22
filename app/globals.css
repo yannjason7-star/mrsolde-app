@@ -1,0 +1,33 @@
+@import "tailwindcss";
+
+@theme {
+  --color-brand-red: #E11D48;
+  --color-brand-bg: #F8FAFC;
+  --color-brand-card: #FFFFFF;
+  --color-brand-border: #F1F5F9;
+  --color-brand-text: #0F172A;
+}
+
+:root {
+  background-color: var(--color-brand-bg);
+  color: var(--color-brand-text);
+  font-family: 'Inter', sans-serif;
+}
+
+body { margin: 0; min-height: 100vh; }
+
+.glass-card {
+  @apply bg-white border border-slate-100 shadow-[0_8px_30px_rgb(0,0,0,0.02)] rounded-[2.5rem];
+}
+
+.custom-scrollbar::-webkit-scrollbar { width: 4px; }
+.custom-scrollbar::-webkit-scrollbar-thumb { background: #E2E8F0; border-radius: 10px; }
+
+@keyframes blink-red {
+  0%, 100% { fill: #E11D48; opacity: 1; }
+  50% { fill: #fca5a5; opacity: 0.6; }
+}
+
+.animate-blink-red {
+  animation: blink-red 1s infinite;
+}
