@@ -32,69 +32,96 @@ body { margin: 0; min-height: 100vh; }
   animation: blink-red 1s infinite;
 }
 
-/* --- FORCE MOBILE RESPONSIVE MR SOLDE --- */
+/* --- LE CORRECTIF DÉCONNEXION MOBILE MR SOLDE --- */
 @media (max-width: 1024px) {
-  /* On force le conteneur principal à s'empiler verticalement */
-  body {
-    flex-direction: column !important;
-  }
+  body { flex-direction: column !important; }
 
-  /* La Sidebar devient une barre simple en haut */
+  /* La Sidebar devient une barre de navigation fixe en haut */
   div.w-72.h-screen.fixed {
-    position: relative !important;
+    position: sticky !important;
+    top: 0 !important;
     width: 100% !important;
-    height: auto !important;
-    min-height: fit-content !important;
-    border-right: none !important;
-    border-bottom: 1px solid #f1f5f9 !important;
-    padding: 10px !important;
-    left: 0 !important;
-    transform: none !important;
+    height: 70px !important;
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    padding: 0 15px !important;
+    background: white !important;
+    z-index: 1000 !important;
+    border-bottom: 2px solid #f1f5f9 !important;
   }
 
-  /* On cache les éléments de menu inutiles sur mobile pour gagner de la place */
+  /* Cache le texte "Mr Solde" pour gagner de la place, on garde juste l'icône S */
+  div.w-72 span.font-black.text-xl { display: none !important; }
+
+  /* Le menu défile horizontalement au milieu */
   nav.flex-1 {
     display: flex !important;
     flex-direction: row !important;
     overflow-x: auto !important;
-    padding: 10px 0 !important;
-    gap: 10px !important;
-  }
-  
-  nav.flex-1 a {
-    padding: 8px 15px !important;
-    white-space: nowrap !important;
-    border-radius: 12px !important;
+    gap: 8px !important;
+    padding: 0 10px !important;
+    margin: 0 !important;
   }
 
-  /* Le contenu principal prend toute la largeur */
+  nav.flex-1 a {
+    padding: 6px 12px !important;
+    white-space: nowrap !important;
+    font-size: 10px !important;
+  }
+
+  /* --- LE BOUTON DÉCONNEXION (RETOUR) --- */
+  /* On affiche uniquement le bouton de déconnexion à droite */
+  .p-4.bg-slate-50.rounded-\[2\.5rem\].mt-auto {
+    display: block !important;
+    background: transparent !important;
+    border: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    width: auto !important;
+  }
+
+  /* Cache le nom de l'utilisateur pour ne garder que le bouton rouge */
+  .p-4.bg-slate-50.rounded-\[2\.5rem\].mt-auto div.flex.items-center.gap-3.mb-4 {
+    display: none !important;
+  }
+
+  /* Stylise le bouton déconnexion en petit bouton rouge à droite */
+  button.w-full.flex.items-center.justify-center.gap-2.text-slate-400 {
+    width: 40px !important;
+    height: 40px !important;
+    background: #FEF2F2 !important; /* Rouge très clair */
+    color: #E11D48 !important; /* Rouge Mr Solde */
+    border-radius: 12px !important;
+    padding: 0 !important;
+  }
+
+  /* Cache le texte "Déconnexion", on ne garde que l'icône */
+  button.w-full.flex.items-center.justify-center.gap-2 span {
+    display: none !important;
+  }
+
+  /* Contenu principal */
   main, .lg\:ml-72 {
     margin-left: 0 !important;
     padding: 15px !important;
-    width: 100% !important;
   }
 
-  /* FORCE TOUTES LES GRILLES SUR 1 COLONNE */
+  /* Grilles sur 1 colonne */
   .grid, [class*="grid-cols-"] {
-    grid-template-columns: repeat(1, minmax(0, 1fr)) !important;
-    gap: 10px !important;
+    grid-template-columns: 1fr !important;
   }
+}
 
-  /* Les graphiques s'adaptent */
-  .recharts-responsive-container {
-    height: 250px !important;
-  }
-
-  /* Les tableaux deviennent scrollables horizontalement */
-  .overflow-x-auto, table {
-    display: block !important;
-    width: 100% !important;
-    overflow-x: auto !important;
-    -webkit-overflow-scrolling: touch !important;
+@media (max-width: 1024px) {
+  /* Désactive le sticky sur mobile pour la barre de filtre */
+  .lg\:sticky {
+    position: static !important;
   }
   
-  /* Masque le footer profil sur mobile pour alléger le haut */
-  .p-4.bg-slate-50.rounded-\[2\.5rem\].mt-auto {
-      display: none !important;
+  /* Permet aux boutons de catégories de défiler proprement */
+  .custom-scrollbar::-webkit-scrollbar {
+    height: 2px;
   }
 }
