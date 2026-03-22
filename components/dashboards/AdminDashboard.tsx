@@ -93,11 +93,15 @@ export default function AdminDashboard({ user }: any) {
         name: c, value: prod?.filter((p:any) => p.category === c).reduce((acc:any, curr:any)=>acc+Number(curr.quantity || 0), 0) || 0
       })));
       
-      setAlerts(prod?.filter((p:any) => p.quantity <= 10).map((p:any) => ({
-        name: p.model, qty: p.quantity, 
+      // --- ALERTES STOCK (CORRIGÉ POUR VERCEL) ---
+      const stockAlerts = prod ? prod.filter((p:any) => p.quantity <= 10).map((p:any) => ({
+        name: p.model, 
+        qty: p.quantity, 
         status: p.quantity < 5 ? 'RUPTURE' : 'FAIBLE',
         color: p.quantity < 5 ? 'text-brand-red bg-red-50 border-brand-red/10' : 'text-orange-600 bg-orange-50 border-orange-100'
-      })).slice(0, 4));
+      })).slice(0, 4) : []; // Si prod est vide, on envoie une liste vide []
+
+      setAlerts(stockAlerts);
 
       setLogs(activity || []);
 
