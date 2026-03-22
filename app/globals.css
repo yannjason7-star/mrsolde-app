@@ -31,3 +31,70 @@ body { margin: 0; min-height: 100vh; }
 .animate-blink-red {
   animation: blink-red 1s infinite;
 }
+
+/* --- FORCE MOBILE RESPONSIVE MR SOLDE --- */
+@media (max-width: 1024px) {
+  /* On force le conteneur principal à s'empiler verticalement */
+  body {
+    flex-direction: column !important;
+  }
+
+  /* La Sidebar devient une barre simple en haut */
+  div.w-72.h-screen.fixed {
+    position: relative !important;
+    width: 100% !important;
+    height: auto !important;
+    min-height: fit-content !important;
+    border-right: none !important;
+    border-bottom: 1px solid #f1f5f9 !important;
+    padding: 10px !important;
+    left: 0 !important;
+    transform: none !important;
+  }
+
+  /* On cache les éléments de menu inutiles sur mobile pour gagner de la place */
+  nav.flex-1 {
+    display: flex !important;
+    flex-direction: row !important;
+    overflow-x: auto !important;
+    padding: 10px 0 !important;
+    gap: 10px !important;
+  }
+  
+  nav.flex-1 a {
+    padding: 8px 15px !important;
+    white-space: nowrap !important;
+    border-radius: 12px !important;
+  }
+
+  /* Le contenu principal prend toute la largeur */
+  main, .lg\:ml-72 {
+    margin-left: 0 !important;
+    padding: 15px !important;
+    width: 100% !important;
+  }
+
+  /* FORCE TOUTES LES GRILLES SUR 1 COLONNE */
+  .grid, [class*="grid-cols-"] {
+    grid-template-columns: repeat(1, minmax(0, 1fr)) !important;
+    gap: 10px !important;
+  }
+
+  /* Les graphiques s'adaptent */
+  .recharts-responsive-container {
+    height: 250px !important;
+  }
+
+  /* Les tableaux deviennent scrollables horizontalement */
+  .overflow-x-auto, table {
+    display: block !important;
+    width: 100% !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+  
+  /* Masque le footer profil sur mobile pour alléger le haut */
+  .p-4.bg-slate-50.rounded-\[2\.5rem\].mt-auto {
+      display: none !important;
+  }
+}
