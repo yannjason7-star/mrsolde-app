@@ -12,7 +12,7 @@ export default function SellerDashboard({ user }: any) {
   const [loading, setLoading] = useState(true);
   const [allSales, setAllSales] = useState<any[]>([]);
   const [selectedSale, setSelectedSale] = useState<any>(null);
-  const [selectedDaySales, setSelectedDaySales] = useState<any[] | null>(null);
+  const [selectedDaySales, setSelectedDaySales] = useState<any | null>(null);
 
   useEffect(() => {
     if (user?.id) fetchSellerData();
