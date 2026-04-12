@@ -7,6 +7,8 @@ import {
   AlertCircle, CheckCircle2, ShoppingBag, Layers
 } from 'lucide-react';
 import ProductModal from '@/components/ProductModal';
+import EditProductModal from '@/components/EditProductModal';
+import { logAction } from '@/lib/auditLogger';
 
 export default function InventoryPage() {
   const [products, setProducts] = useState<any[]>([]);
@@ -33,9 +35,32 @@ export default function InventoryPage() {
     setLoading(false);
   };
 
+  // Fonction pour obtenir le nom d'affichage d'un produit
+  const getProductDisplayName = (p: any) => {
+    if (p.category === 'Accessoire') {
+      return `${p.brand} ${p.subcategory || 'Accessoire'}${p.compatible_with ? ` (${p.compatible_with})` : ''}`;
+    }
+    return `${p.brand} ${p.model || ''}`;
+  };
+
+  // Fonction pour obtenir les détails d'affichage d'un produit
+  const getProductDetails = (p: any) => {
+    if (p.category === 'Accessoire') {
+      const details = [];
+      if (p.texture) details.push(p.texture);
+      if (p.power) details.push(p.power);
+      if (p.earphone_type) details.push(p.earphone_type);
+      if (p.cable_type) details.push(`${p.cable_type} ${p.cable_length || ''}`);
+      if (p.color && details.length === 0) details.push(p.color);
+      return details.join(' • ') || '---';
+    }
+    return `${p.color || '---'} • ${p.storage || '---'}`;
+  };
+
   const filteredProducts = useMemo(() => {
     return products.filter(p => {
-      const matchSearch = (p.model?.toLowerCase() || "").includes(search.toLowerCase()) || 
+      const displayName = getProductDisplayName(p);
+      const matchSearch = displayName.toLowerCase().includes(search.toLowerCase()) || 
                           (p.product_code?.toLowerCase() || "").includes(search.toLowerCase()) ||
                           (p.imei || "").includes(search);
       const matchCat = selectedCat === "Tous" || p.category === selectedCat;
@@ -56,6 +81,30 @@ export default function InventoryPage() {
     return ["Toutes", ...Array.from(new Set(brands))];
   }, [products, selectedCat]);
 
+  const handleDelete = async (product: any) => {
+    if (!confirm(`Supprimer ${getProductDisplayName(product)} ?`)) return;
+    
+    await logAction({
+      action: 'DELETE',
+      entity_type: 'product',
+      entity_id: product.id,
+      old_values: {
+        brand: product.brand,
+        model: product.model || product.subcategory,
+        quantity: product.quantity,
+        price: product.selling_price,
+        imei: product.imei || null
+      }
+    });
+    
+    const { error } = await supabase.from('products').delete().eq('id', product.id);
+    if (!error) {
+      fetchProducts();
+    } else {
+      alert(error.message);
+    }
+  };
+
   return (
     <div className="max-w-[1600px] mx-auto py-4 md:py-8 px-4 md:px-6 animate-in fade-in duration-700">
       
@@ -69,9 +118,8 @@ export default function InventoryPage() {
         )}
       </div>
 
-      {/* --- FILTRE : STICKY UNIQUEMENT SUR PC (lg:sticky) --- */}
+      {/* FILTRES */}
       <div className="glass-card p-4 md:p-6 mb-8 space-y-4 md:space-y-6 bg-white/70 backdrop-blur-xl border-slate-100 lg:sticky lg:top-4 z-40">
-        
         <div className="flex flex-col lg:flex-row gap-4 items-center">
           <div className="relative flex-1 w-full">
             <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-300" size={18} />
@@ -80,8 +128,6 @@ export default function InventoryPage() {
               className="w-full bg-white border border-slate-100 p-4 pl-14 rounded-2xl font-bold text-sm outline-none focus:ring-2 ring-brand-red/10"
             />
           </div>
-
-          {/* Catégories défilantes sur mobile */}
           <div className="flex bg-slate-100 p-1 rounded-2xl gap-1 w-full lg:w-auto overflow-x-auto custom-scrollbar">
             {['Tous', 'Smartphone', 'Laptop', 'Accessoire'].map(c => (
               <button key={c} onClick={() => { setSelectedCat(c); setSelectedBrand("Toutes"); }}
@@ -89,7 +135,6 @@ export default function InventoryPage() {
             ))}
           </div>
         </div>
-
         <div className="flex flex-wrap gap-3 border-t border-slate-50 pt-4 md:pt-6">
           <div className="flex flex-col gap-1.5 flex-1 min-w-[200px]">
             <span className="text-[8px] font-black text-slate-400 uppercase px-2">Marque</span>
@@ -100,7 +145,6 @@ export default function InventoryPage() {
               ))}
             </div>
           </div>
-
           <div className="flex flex-col gap-1.5">
             <span className="text-[8px] font-black text-slate-400 uppercase px-2">Stock</span>
             <div className="flex gap-2">
@@ -113,7 +157,7 @@ export default function InventoryPage() {
         </div>
       </div>
 
-      {/* --- TABLEAU AVEC SCROLL HORIZONTAL --- */}
+      {/* TABLEAU */}
       <div className="bg-white border border-slate-100 rounded-[2rem] md:rounded-[3rem] shadow-sm overflow-hidden">
         <div className="overflow-x-auto custom-scrollbar">
           <table className="w-full text-left border-collapse min-w-[900px]">
@@ -139,8 +183,8 @@ export default function InventoryPage() {
                         {p.category === 'Smartphone' ? <Smartphone size={16}/> : p.category === 'Laptop' ? <Laptop size={16}/> : <Package size={16}/>}
                       </div>
                       <div>
-                        <p className="font-black text-slate-900 uppercase italic text-xs tracking-tight">{p.brand} {p.model}</p>
-                        <p className="text-[8px] font-black text-slate-400 uppercase italic">{p.color} • {p.storage || '---'}</p>
+                        <p className="font-black text-slate-900 uppercase italic text-xs tracking-tight">{getProductDisplayName(p)}</p>
+                        <p className="text-[8px] font-black text-slate-400 uppercase italic">{getProductDetails(p)}</p>
                       </div>
                     </div>
                   </td>
@@ -149,8 +193,16 @@ export default function InventoryPage() {
                   <td className="p-6 text-center font-black text-slate-900 italic text-sm">{p.selling_price.toLocaleString()} F</td>
                   <td className="p-6 text-right">
                     <div className="flex justify-end gap-2">
-                      {(user?.can_edit_stock || user?.role === 'admin') && <button onClick={() => { setEditItem(p); setIsModalOpen(true); }} className="p-3 bg-slate-50 text-slate-400 rounded-2xl hover:text-slate-900 transition-all"><Edit3 size={16}/></button>}
-                      {user?.role === 'admin' && <button onClick={async () => { if(confirm('Supprimer ?')) { await supabase.from('products').delete().eq('id', p.id); fetchProducts(); } }} className="p-3 bg-red-50 text-brand-red rounded-2xl hover:bg-brand-red hover:text-white transition-all"><Trash2 size={16}/></button>}
+                      {(user?.can_edit_stock || user?.role === 'admin') && (
+                        <button onClick={() => { setEditItem(p); setIsModalOpen(true); }} className="p-3 bg-slate-50 text-slate-400 rounded-2xl hover:text-slate-900 transition-all">
+                          <Edit3 size={16}/>
+                        </button>
+                      )}
+                      {user?.role === 'admin' && (
+                        <button onClick={() => handleDelete(p)} className="p-3 bg-red-50 text-brand-red rounded-2xl hover:bg-brand-red hover:text-white transition-all">
+                          <Trash2 size={16}/>
+                        </button>
+                      )}
                     </div>
                   </td>
                 </tr>
@@ -160,7 +212,8 @@ export default function InventoryPage() {
         </div>
       </div>
 
-      <ProductModal isOpen={isModalOpen} onClose={() => { setIsModalOpen(false); setEditItem(null); }} onSuccess={fetchProducts} editProduct={editItem} />
+      <ProductModal isOpen={isModalOpen && !editItem} onClose={() => { setIsModalOpen(false); setEditItem(null); }} onSuccess={fetchProducts} />
+      <EditProductModal isOpen={isModalOpen && !!editItem} onClose={() => { setIsModalOpen(false); setEditItem(null); }} onSuccess={fetchProducts} product={editItem} />
     </div>
   );
 }

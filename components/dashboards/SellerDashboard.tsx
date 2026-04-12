@@ -8,6 +8,15 @@ import {
 } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 
+// Fonction pour obtenir le nom d'affichage d'un produit
+const getProductDisplayName = (product: any) => {
+  if (!product) return 'Article inconnu';
+  if (product.category === 'Accessoire') {
+    return `${product.brand} ${product.subcategory || 'Accessoire'}${product.compatible_with ? ` (${product.compatible_with})` : ''}`;
+  }
+  return `${product.brand} ${product.model || ''}`;
+};
+
 export default function SellerDashboard({ user }: any) {
   const [loading, setLoading] = useState(true);
   const [allSales, setAllSales] = useState<any[]>([]);
@@ -30,21 +39,18 @@ export default function SellerDashboard({ user }: any) {
     setLoading(false);
   };
 
-  // --- LOGIQUE DE CALCULS ---
   const today = new Date().toISOString().split('T')[0];
 
-  // 1. Chiffre du jour (Reset quotidien automatique)
   const todayRevenue = useMemo(() => {
     return allSales
       .filter(s => s.sale_date.startsWith(today))
       .reduce((acc, s) => acc + Number(s.final_price), 0);
   }, [allSales, today]);
 
-  // 2. Meilleur Article (Best Seller)
   const bestSeller = useMemo(() => {
     if (allSales.length === 0) return null;
     const counts = allSales.reduce((acc: any, s: any) => {
-      const name = s.products?.model || 'Article';
+      const name = getProductDisplayName(s.products);
       if (!acc[name]) acc[name] = { name, qty: 0, rev: 0 };
       acc[name].qty += (s.quantity_sold || 1);
       acc[name].rev += Number(s.final_price);
@@ -53,7 +59,6 @@ export default function SellerDashboard({ user }: any) {
     return Object.values(counts).sort((a: any, b: any) => b.qty - a.qty)[0] as any;
   }, [allSales]);
 
-  // 3. Historique par jour
   const dailyHistory = useMemo(() => {
     const groups = allSales.reduce((acc: any, s: any) => {
       const date = s.sale_date.split('T')[0];
@@ -66,7 +71,6 @@ export default function SellerDashboard({ user }: any) {
     return Object.values(groups).sort((a: any, b: any) => b.date.localeCompare(a.date));
   }, [allSales]);
 
-  // 4. DATA GRAPHIQUE : SOMME DES QUANTITÉS VENDUES (Axe Vertical)
   const chartData = useMemo(() => {
     const getQty = (filterFn: (s: any) => boolean) => 
       allSales.filter(filterFn).reduce((acc, s) => acc + (s.quantity_sold || 1), 0);
@@ -90,7 +94,6 @@ export default function SellerDashboard({ user }: any) {
         <p className="text-slate-400 font-bold uppercase text-[10px] tracking-[4px]">Session: {user.full_name}</p>
       </div>
 
-      {/* --- KPIs PRINCIPAUX --- */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         <div className="glass-card p-10 flex items-center justify-between border-l-8 border-l-green-500">
           <div>
@@ -101,7 +104,6 @@ export default function SellerDashboard({ user }: any) {
           <div className="w-16 h-16 bg-green-50 rounded-[2rem] flex items-center justify-center text-green-500 shadow-sm"><TrendingUp size={32}/></div>
         </div>
 
-        {/* CARTE BEST-SELLER (Remplace transactions faites) */}
         <div className="glass-card p-10 bg-slate-900 text-white relative overflow-hidden group">
           <Award className="absolute -right-4 -bottom-4 text-white/5 group-hover:scale-110 transition-transform" size={120} />
           <div className="relative z-10">
@@ -128,7 +130,6 @@ export default function SellerDashboard({ user }: any) {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* GRAPH BARRE : QUANTITÉS RÉELLES (AXE VERTICAL) */}
         <div className="lg:col-span-2 glass-card p-10">
           <div className="flex justify-between items-center mb-10">
              <h3 className="text-[10px] font-black uppercase tracking-[4px] text-slate-400 italic">Volume de sortie (Quantités cumulées)</h3>
@@ -149,7 +150,6 @@ export default function SellerDashboard({ user }: any) {
           </div>
         </div>
 
-        {/* HISTORIQUE JOURNALIER CLICABLE */}
         <div className="glass-card p-8 flex flex-col">
           <h3 className="text-[10px] font-black uppercase tracking-[3px] text-slate-400 mb-8 italic flex items-center gap-2">
             <Calendar size={14}/> Archives par Journée
@@ -175,7 +175,6 @@ export default function SellerDashboard({ user }: any) {
         </div>
       </div>
 
-      {/* SECTION VENTES RÉCENTES */}
       <div className="glass-card p-10">
          <h3 className="text-[10px] font-black uppercase tracking-[4px] text-slate-400 mb-8 italic flex items-center gap-2"><Clock size={16}/> Dernières factures</h3>
          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -184,7 +183,7 @@ export default function SellerDashboard({ user }: any) {
                 <div className="flex items-center gap-4">
                   <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center text-brand-red shadow-sm group-hover:bg-brand-red group-hover:text-white transition-colors"><CreditCard size={18}/></div>
                   <div>
-                    <p className="text-xs font-black uppercase italic text-slate-900">{sale.products?.model}</p>
+                    <p className="text-xs font-black uppercase italic text-slate-900">{getProductDisplayName(sale.products)}</p>
                     <p className="text-[9px] font-bold text-slate-400 uppercase">{sale.client_name}</p>
                   </div>
                 </div>
@@ -197,7 +196,7 @@ export default function SellerDashboard({ user }: any) {
          </div>
       </div>
 
-      {/* --- MODAL DÉTAILS VENTE ULTRA-PRÉCIS --- */}
+      {/* MODAL DÉTAILS VENTE */}
       {selectedSale && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-slate-900/60 backdrop-blur-md">
           <div className="bg-white w-full max-w-md rounded-[3rem] shadow-2xl p-10 animate-in zoom-in-95">
@@ -209,7 +208,7 @@ export default function SellerDashboard({ user }: any) {
              <div className="space-y-6">
                 <div className="p-6 bg-slate-900 rounded-[2.5rem] text-white">
                    <p className="text-[10px] font-black text-slate-500 uppercase mb-2">Produit</p>
-                   <h3 className="text-xl font-black italic uppercase leading-tight">{selectedSale.products?.brand} {selectedSale.products?.model}</h3>
+                   <h3 className="text-xl font-black italic uppercase leading-tight">{getProductDisplayName(selectedSale.products)}</h3>
                    <div className="flex gap-4 mt-3 text-[9px] font-bold uppercase text-brand-red">
                       <span>{selectedSale.products?.color}</span>
                       <span>{selectedSale.products?.storage}</span>
@@ -244,7 +243,7 @@ export default function SellerDashboard({ user }: any) {
         </div>
       )}
 
-      {/* --- MODAL RÉCAPITULATIF JOURNÉE --- */}
+      {/* MODAL RÉCAPITULATIF JOURNÉE */}
       {selectedDaySales && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-slate-900/60 backdrop-blur-md">
           <div className="bg-white w-full max-w-2xl rounded-[3rem] shadow-2xl p-12 animate-in slide-in-from-bottom-10">
@@ -262,7 +261,7 @@ export default function SellerDashboard({ user }: any) {
                      <div className="flex items-center gap-4">
                         <span className="text-[10px] font-black text-slate-300">#{(selectedDaySales.items.length - idx)}</span>
                         <div>
-                           <p className="text-[11px] font-black uppercase italic text-slate-900">{sale.products?.model}</p>
+                           <p className="text-[11px] font-black uppercase italic text-slate-900">{getProductDisplayName(sale.products)}</p>
                            <p className="text-[9px] font-bold text-slate-400 uppercase">Client : {sale.client_name}</p>
                         </div>
                      </div>

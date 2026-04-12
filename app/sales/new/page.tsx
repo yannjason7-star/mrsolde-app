@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { Search, CreditCard, CheckCircle2, Loader2, PackageSearch, Minus, Plus, User } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
+import { logAction } from '@/lib/auditLogger';
 
 export default function NewSalePage() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -10,6 +11,15 @@ export default function NewSalePage() {
   const [clientName, setClientName] = useState("");
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
+
+  // Fonction pour obtenir le nom d'affichage du produit
+  const getProductDisplayName = (product: any) => {
+    if (!product) return '';
+    if (product.category === 'Accessoire') {
+      return `${product.brand} ${product.subcategory || 'Accessoire'}${product.compatible_with ? ` (${product.compatible_with})` : ''}`;
+    }
+    return `${product.brand} ${product.model || ''}`;
+  };
 
   useEffect(() => {
     const search = async () => {
@@ -30,47 +40,61 @@ export default function NewSalePage() {
     const storedData = localStorage.getItem('userData');
     const user = storedData ? JSON.parse(storedData) : null;
     const newQuantity = selectedProduct.quantity - qtyToSell;
+    const totalAmount = selectedProduct.selling_price * qtyToSell;
+    const productDisplayName = getProductDisplayName(selectedProduct);
 
     try {
-      // 1. Mise à jour du Stock
       await supabase.from('products').update({ 
         quantity: newQuantity, 
         status: newQuantity === 0 ? 'Rupture' : 'En Stock' 
       }).eq('id', selectedProduct.id);
 
-      // 2. Enregistrement de la Vente
-      await supabase.from('sales').insert([{
+      const { data: saleData, error: saleError } = await supabase.from('sales').insert([{
         product_id: selectedProduct.id,
         client_name: clientName,
-        final_price: selectedProduct.selling_price * qtyToSell,
+        final_price: totalAmount,
         quantity_sold: qtyToSell,
         seller_id: parseInt(user.id)
-      }]);
+      }]).select();
 
-      // 3. ENREGISTREMENT DU MOUVEMENT (CRUCIAL POUR LE GRAPH)
+      if (saleError) throw saleError;
+
       await supabase.from('stock_movements').insert([{
         type: 'SORTIE',
         product_id: selectedProduct.id,
-        product_name: `${selectedProduct.brand} ${selectedProduct.model}`,
+        product_name: productDisplayName,
         quantity: qtyToSell,
         user_name: user.full_name,
         reference_id: `Vente #${Date.now().toString().slice(-4)}`
       }]);
 
-      // 4. Log Audit Admin
-      await supabase.from('activity_logs').insert([{
-        user_id: parseInt(user.id),
-        user_name: user.full_name,
-        user_role: user.role,
-        action_type: 'VENTE',
-        details: `Vendu ${qtyToSell}x ${selectedProduct.model}`,
-        amount: selectedProduct.selling_price * qtyToSell
-      }]);
+      await logAction({
+        action: 'SALE',
+        entity_type: 'sale',
+        entity_id: saleData?.[0]?.id,
+        new_values: {
+          product_id: selectedProduct.id,
+          product_name: productDisplayName,
+          quantity: qtyToSell,
+          unit_price: selectedProduct.selling_price,
+          total_amount: totalAmount,
+          client_name: clientName
+        },
+        amount: totalAmount
+      });
 
       setSuccess(true);
-      setTimeout(() => { setSuccess(false); setSelectedProduct(null); setSearchTerm(""); setClientName(""); }, 2000);
-    } catch (err: any) { alert("Erreur : " + err.message); }
-    finally { setLoading(false); }
+      setTimeout(() => { 
+        setSuccess(false); 
+        setSelectedProduct(null); 
+        setSearchTerm(""); 
+        setClientName(""); 
+      }, 2000);
+    } catch (err: any) { 
+      alert("Erreur : " + err.message); 
+    } finally { 
+      setLoading(false); 
+    }
   };
 
   return (
@@ -87,7 +111,7 @@ export default function NewSalePage() {
           {selectedProduct && (
             <div className="bg-slate-900 p-8 rounded-[2.5rem] text-white animate-in zoom-in-95 shadow-2xl">
               <p className="text-[10px] font-black text-brand-red uppercase mb-1">{selectedProduct.brand} • Stock: {selectedProduct.quantity}</p>
-              <h4 className="text-2xl font-black italic uppercase mb-6">{selectedProduct.model}</h4>
+              <h4 className="text-2xl font-black italic uppercase mb-6">{getProductDisplayName(selectedProduct)}</h4>
               <div className="flex items-center justify-between bg-white/5 p-4 rounded-2xl mb-6">
                 <span className="text-[10px] font-black uppercase text-slate-500">Quantité</span>
                 <div className="flex items-center gap-4">

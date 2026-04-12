@@ -2,7 +2,6 @@
 import { useRouter, usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-// AJOUT DE "Activity" DANS LES IMPORTS CI-DESSOUS
 import { 
   LayoutDashboard, 
   Package, 
@@ -10,7 +9,9 @@ import {
   Users, 
   Receipt, 
   LogOut, 
-  Activity 
+  Activity,
+  History,
+  Eye  // ← AJOUTÉ pour le suivi boutique
 } from 'lucide-react';
 
 export default function Sidebar() {
@@ -62,6 +63,18 @@ export default function Sidebar() {
       label: 'Flux & Mouvements', 
       href: '/admin/movements', 
       show: user.role === 'admin' 
+    },
+    { 
+      icon: History,
+      label: 'Audit & Traçabilité', 
+      href: '/admin/audit', 
+      show: user.role === 'admin'
+    },
+    { 
+      icon: Eye,  // ← NOUVEAU
+      label: 'Suivi Boutique', 
+      href: '/admin/suivi', 
+      show: user.role === 'admin'
     },
     { 
       icon: Users, 

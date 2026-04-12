@@ -5,6 +5,15 @@ import { Package, PackagePlus, Clock, ArrowRight } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import { useRouter } from 'next/navigation';
 
+// Fonction pour obtenir le nom d'affichage d'un produit
+const getProductDisplayName = (product: any) => {
+  if (!product) return 'Article inconnu';
+  if (product.category === 'Accessoire') {
+    return `${product.brand} ${product.subcategory || 'Accessoire'}${product.compatible_with ? ` (${product.compatible_with})` : ''}`;
+  }
+  return `${product.brand} ${product.model || ''}`;
+};
+
 export default function ManagerDashboard({ user }: any) {
   const router = useRouter();
   const [data, setData] = useState<any>({ stats: {}, chart: [], logs: [] });
@@ -12,7 +21,6 @@ export default function ManagerDashboard({ user }: any) {
   useEffect(() => {
     const fetchManager = async () => {
       const { data: products } = await supabase.from('products').select('*');
-      // On récupère TOUT l'historique de l'utilisateur sans limite
       const { data: logs } = await supabase.from('activity_logs')
         .select('*').eq('user_name', user.full_name).eq('action_type', 'STOCK').order('created_at', {ascending: false});
 
@@ -25,10 +33,16 @@ export default function ManagerDashboard({ user }: any) {
         { name: 'Accessoire', qty: products?.filter(p => p.category === 'Accessoire').reduce((a,b)=>a+b.quantity,0) || 0, color: '#64748b' },
       ];
 
+      // Formater les logs avec le nom d'affichage
+      const formattedLogs = logs?.map((log: any) => ({
+        ...log,
+        displayName: log.details
+      })) || [];
+
       setData({
         stats: { total: products?.reduce((a,b)=>a+b.quantity,0) || 0, arrivals: logs?.length || 0 },
         chart: categories,
-        logs: logs || []
+        logs: formattedLogs
       });
     };
     fetchManager();

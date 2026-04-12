@@ -11,17 +11,25 @@ import {
 } from 'recharts';
 
 const CAT_COLORS: any = {
-  Smartphone: '#E11D48', // Rouge
-  Laptop: '#2563EB',     // Bleu
-  Tablette: '#8B5CF6',   // Violet
-  Accessoire: '#10B981'  // Vert
+  Smartphone: '#E11D48',
+  Laptop: '#2563EB',
+  Tablette: '#8B5CF6',
+  Accessoire: '#10B981'
+};
+
+// Fonction pour obtenir le nom d'affichage d'un produit
+const getProductDisplayName = (product: any) => {
+  if (!product) return 'Article inconnu';
+  if (product.category === 'Accessoire') {
+    return `${product.brand} ${product.subcategory || 'Accessoire'}${product.compatible_with ? ` (${product.compatible_with})` : ''}`;
+  }
+  return `${product.brand} ${product.model || ''}`;
 };
 
 export default function AdminDashboard({ user }: any) {
   const [loading, setLoading] = useState(true);
   const [selectedLog, setSelectedLog] = useState<any>(null);
   
-  // États des données
   const [stats, setStats] = useState<any>({
     rev: 0, exp: 0, profit: 0, stock: 0,
     vedette: { name: "Analyse...", qty: 0, rev: 0 }
@@ -29,7 +37,7 @@ export default function AdminDashboard({ user }: any) {
   const [pieData, setPieData] = useState<any[]>([]);
   const [lineData, setLineData] = useState<any[]>([]);
   const [alerts, setAlerts] = useState<any[]>([]);
-  const [logs, setLogs] = useState<any[]>([]); // La variable qui manquait
+  const [logs, setLogs] = useState<any[]>([]);
 
   useEffect(() => { fetchAdminData(); }, []);
 
@@ -39,20 +47,18 @@ export default function AdminDashboard({ user }: any) {
       const now = new Date();
       const today = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
 
-      // 1. RÉCUPÉRATION DATA
       const { data: prod } = await supabase.from('products').select('*');
       const { data: sales } = await supabase.from('sales').select('*, products(*)');
       const { data: exp } = await supabase.from('expenses').select('*').gte('expense_date', today);
       const { data: activity } = await supabase.from('activity_logs').select('*').order('created_at', {ascending: false}).limit(12);
 
-      // --- CALCUL VEDETTE DU JOUR ---
       const todaySales = sales?.filter(s => s.sale_date >= today) || [];
       let bestItem = { name: "Aucun article", qty: 0, rev: 0 };
       
       if (todaySales.length > 0) {
         const map: any = {};
         todaySales.forEach((s: any) => {
-          const name = s.products?.model || "Article Inconnu";
+          const name = getProductDisplayName(s.products);
           if (!map[name]) map[name] = { name, qty: 0, rev: 0 };
           map[name].qty += (Number(s.quantity_sold) || 1);
           map[name].rev += Number(s.final_price || 0);
@@ -60,11 +66,9 @@ export default function AdminDashboard({ user }: any) {
         bestItem = Object.values(map).sort((a: any, b: any) => b.qty - a.qty)[0] as any;
       }
 
-      // --- CALCULS KPIs ---
       const totalRev = todaySales.reduce((acc, curr) => acc + Number(curr.final_price || 0), 0);
       const totalExp = exp?.reduce((acc, curr) => acc + Number(curr.amount || 0), 0) || 0;
 
-      // --- GRAPH 7 JOURS RÉEL ---
       const last7Days = [...Array(7)].map((_, i) => {
         const d = new Date();
         d.setDate(d.getDate() - (6 - i));
@@ -93,12 +97,10 @@ export default function AdminDashboard({ user }: any) {
         name: c, value: prod?.filter((p:any) => p.category === c).reduce((acc:any, curr:any)=>acc+Number(curr.quantity || 0), 0) || 0
       })));
       
-   // --- ALERTES STOCK (CORRIGÉ POUR VERCEL) ---
-      // On utilise (prod || []) pour garantir que l'on travaille sur un tableau, même vide
       const stockAlerts = (prod || [])
         .filter((p: any) => p.quantity <= 10)
         .map((p: any) => ({
-          name: p.model,
+          name: getProductDisplayName(p),
           qty: p.quantity,
           status: p.quantity < 5 ? 'RUPTURE' : 'FAIBLE',
           color: p.quantity < 5 ? 'text-brand-red bg-red-50 border-brand-red/10' : 'text-orange-600 bg-orange-50 border-orange-100'
@@ -106,7 +108,6 @@ export default function AdminDashboard({ user }: any) {
         .slice(0, 4);
 
       setAlerts(stockAlerts);
-
       setLogs(activity || []);
 
     } catch (e) { console.error(e); }
@@ -118,9 +119,8 @@ export default function AdminDashboard({ user }: any) {
   return (
     <div className="max-w-[1600px] mx-auto p-4 md:p-8 space-y-8 animate-in fade-in duration-700">
       
-      {/* 💰 SECTION 1 : KPIs (STYLE ANTI-DÉBORDEMENT) */}
+      {/* KPIs */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        
         <div className="bg-white p-6 rounded-[2.5rem] border border-slate-100 shadow-sm flex flex-col justify-between min-h-[160px]">
           <p className="text-[10px] font-black text-slate-400 uppercase tracking-[3px] italic">Encaissements</p>
           <h2 className="text-2xl xl:text-3xl font-black italic tracking-tighter text-slate-900 break-all">
@@ -159,7 +159,7 @@ export default function AdminDashboard({ user }: any) {
         </div>
       </div>
 
-      {/* 📈 GRAPHIQUE MULTI-COULEURS (7 JOURS) */}
+      {/* GRAPHIQUE */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2 glass-card p-10">
           <div className="flex justify-between items-center mb-10">
@@ -189,7 +189,7 @@ export default function AdminDashboard({ user }: any) {
           </div>
         </div>
 
-        {/* PIE CHART STOCK ACTUALISÉ */}
+        {/* PIE CHART */}
         <div className="glass-card p-10 flex flex-col items-center justify-center">
            <h3 className="text-xs font-black uppercase tracking-[3px] mb-8 italic text-slate-400">Stock en Magasin</h3>
            <ResponsiveContainer width="100%" height={250}>
@@ -215,7 +215,7 @@ export default function AdminDashboard({ user }: any) {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* ⚠️ ALERTES STOCK (Logique 10 / 5) */}
+        {/* ALERTES STOCK */}
         <div className="glass-card p-8 flex flex-col">
            <h3 className="text-xs font-black uppercase tracking-[3px] mb-8 italic flex items-center gap-2 text-brand-red">
               <AlertTriangle size={18}/> Alertes de Gestion
@@ -231,7 +231,7 @@ export default function AdminDashboard({ user }: any) {
            </div>
         </div>
 
-        {/* 📑 FLUX D'ÉQUIPE CLIQUABLE */}
+        {/* ACTIVITÉS */}
         <div className="glass-card p-10 lg:col-span-2">
            <h3 className="text-xs font-black uppercase tracking-[4px] italic text-slate-400 mb-8 flex items-center gap-2">
               <Activity size={18} className="text-brand-red"/> Activités de l'Équipe

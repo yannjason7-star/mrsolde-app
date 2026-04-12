@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import Sidebar from "@/components/Sidebar"; // On importe la barre latérale
+import ClientLayout from "@/components/ClientLayout";
 
 export const metadata: Metadata = {
   title: "Mr. Solde - Gestion de Stock",
@@ -15,10 +15,7 @@ export default function RootLayout({
   return (
     <html lang="fr">
       <body className="flex">
-        <Sidebar />
-        <main className="flex-1 ml-64 p-8 min-h-screen">
-          {children}
-        </main>
+        <ClientLayout>{children}</ClientLayout>
       </body>
     </html>
   );

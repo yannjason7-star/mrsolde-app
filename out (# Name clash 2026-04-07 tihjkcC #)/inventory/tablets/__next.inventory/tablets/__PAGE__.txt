@@ -1,0 +1,5 @@
+1:"$Sreact.fragment"
+2:I[97367,["/_next/static/chunks/106pr~itgc_fv.js","/_next/static/chunks/03bp~261gqfza.js"],"OutletBoundary"]
+3:"$Sreact.suspense"
+0:{"rsc":["$","$1","c",{"children":[["$","div",null,{"className":"p-8 animate-in fade-in duration-500","children":[["$","h1",null,{"className":"text-3xl font-black text-white tracking-tighter","children":"INVENTORY - TABLETS"}],["$","div",null,{"className":"h-1 w-20 bg-brand-red mt-2 mb-10"}],["$","div",null,{"className":"bg-brand-card/50 border border-brand-border p-20 rounded-3xl border-dashed flex items-center justify-center min-h-[400px] text-gray-600 font-bold uppercase tracking-[4px] text-xs text-center","children":"Interface Mr. Solde en preparation"}]]}],null,["$","$L2",null,{"children":["$","$3",null,{"name":"Next.MetadataOutlet","children":"$@4"}]}]]}],"isPartial":false,"staleTime":300,"varyParams":null,"buildId":"i9bPFQStxarOit7J0C3Ef"}
+4:null

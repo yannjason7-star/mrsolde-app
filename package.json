@@ -1,31 +1,61 @@
 {
   "name": "mrsolde-app",
-  "version": "0.1.0",
-    "type": "module",
+  "version": "1.0.0",
   "private": true,
+  "main": "electron/main.cjs",
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev --webpack",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "electron:build": "electron-builder",
+    "electron:build:win": "electron-builder --win --x64",
+    "electron:build:portable": "electron-builder --win portable --x64"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.99.3",
+    "@tauri-apps/api": "^2.10.1",
+    "electron-updater": "^6.8.3",
+    "express": "^5.2.1",
     "lucide-react": "^0.577.0",
     "next": "16.2.0",
     "postcss": "^8.5.8",
     "react": "19.2.4",
     "react-dom": "19.2.4",
-    "recharts": "^3.8.0"
+    "recharts": "^3.8.0",
+    "serve-handler": "^6.1.7",
+    "sql.js": "^1.14.1"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.2.2",
+    "@tauri-apps/cli": "^2.10.1",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "electron": "^28.0.0",
+    "electron-builder": "^24.9.1",
     "eslint": "^9",
     "eslint-config-next": "16.2.0",
     "tailwindcss": "^4.2.2",
     "typescript": "^5"
+  },
+  "build": {
+    "appId": "com.mrsolde.app",
+    "productName": "Mr Solde",
+    "directories": {
+      "output": "C:\\Users\\USER\\build-electron"
+    },
+    "files": [
+      "electron/**/*",
+      "out/**/*",
+      "public/**/*",
+      "node_modules/**/*"
+    ],
+    "win": {
+      "target": "portable",
+      "icon": "public/logo.png"
+    },
+    "portable": {
+      "artifactName": "MrSolde.exe"
+    }
   }
 }
