@@ -1,9 +1,6 @@
 name: Build Electron App
 
 on:
-  push:
-    tags:
-      - 'v*'
   workflow_dispatch:
 
 jobs:
@@ -16,12 +13,20 @@ jobs:
         with:
           node-version: '20'
           
-      - run: npm ci
-      - run: npm run build
-      - run: npm run electron:build:portable
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Build Next.js
+        run: npm run build
+      
+      - name: Build Electron portable
+        run: npm run electron:build:portable
+      
+      - name: List output directory
+        run: dir dist-electron /s
       
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: MrSolde
-          path: dist-electron\MrSolde.exe   # ← chemin relatif (pas absolu)
+          path: dist-electron/*.exe
