@@ -23,7 +23,5 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: MrSolde.exe
-          path: |
-            dist-electron\MrSolde.exe
-            C:\Users\USER\build-electron\MrSolde.exe
+          name: MrSolde
+          path: dist-electron\MrSolde.exe   # ← chemin relatif (pas absolu)
